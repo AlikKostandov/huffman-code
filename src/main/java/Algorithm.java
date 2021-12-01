@@ -12,11 +12,18 @@ public class Algorithm {
 
     }
 
+    public static String getCorrectText(String text){
+        ArrayList<String> symbolList = new ArrayList<String>(Arrays.asList(text.split("")));
+        ArrayList<String> sign = new ArrayList<String>(Arrays.asList(",", ".", "-", "(", ")", "—", "\"", "\'"));
+        symbolList.removeAll(sign);
+        return symbolList.stream().collect(Collectors.joining());
+    }
     public static void messageEncoding(String text){
         Alphabet alphabet = getMyAlpha(text);
         calculateProbability(alphabet, text);
         HuffmanTree tree = buildATree(alphabet);
         Map<String, String> map = buildCodeTable(tree);
+        System.out.println(map);
         System.out.println(encoding(map,text));
     }
 
@@ -30,11 +37,12 @@ public class Algorithm {
 
     public static Alphabet getMyAlpha(String text) {
         Alphabet myAplpha = new Alphabet(new ArrayList<Element>());
-        ArrayList<String> symbolList = new ArrayList<String>(Arrays.asList(text.split("")));
-        Set<String> uniqueValues = new HashSet<>(symbolList);
-        for (String symbol : uniqueValues) {
-            int count = Collections.frequency(symbolList, symbol);
-            Element el = new Element(symbol, count);
+        text = getCorrectText(text);
+        ArrayList<String> wordList = new ArrayList<String>(Arrays.asList(text.split(" ")));
+        Set<String> uniqueValues = new HashSet<>(wordList);
+        for (String word : uniqueValues) {
+            int count = Collections.frequency(wordList, word);
+            Element el = new Element(word, count);
             myAplpha.symbols.add(el);
         }
 //        Collections.sort(myAplpha.symbols, new Alphabet.SortByCount());
@@ -129,7 +137,8 @@ public class Algorithm {
 
 
     public static String encoding(Map<String, String > binaryForm, String text){
-        ArrayList<String> encoder = new ArrayList<>(Arrays.asList(text.split("")));
+        text = getCorrectText(text);
+        ArrayList<String> encoder = new ArrayList<>(Arrays.asList(text.split(" ")));
         String encodingMessage = encoder.stream().map(o1 -> binaryForm.get(o1)).collect(Collectors.joining());
         return encodingMessage;
     }
