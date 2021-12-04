@@ -1,39 +1,44 @@
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class Algorithm {
     public static Map<String, String> mainAlphabet;
-    public static String textForDecoding;
     public static String textForEncoding;
+    public static String pathToNewFile;
 
 
     public static void main(String[] args) {
-        String text = thisMyText("C:\\Program Files\\Holmes.txt");
-        messageEncoding(text);
-        messageDecoding(mainAlphabet, textForDecoding);
+        Scanner scan = new Scanner(System.in);
+        System.out.print("Укажи путь к файлу: ");
+        String pathToFile = scan.nextLine();
+        System.out.print("Укажи имя нового файла: ");
+        String newFileName = scan.nextLine();
+        messageEncoding(pathToFile, newFileName);
+
 
     }
 
-    public static String getCorrectText(String text) {
-        ArrayList<String> symbolList = new ArrayList<>(Arrays.asList(text.split("")));
-        ArrayList<String> sign = new ArrayList<>(Arrays.asList(",", ".", "-", "(", ")", "—", "\"", "'"));
-        symbolList.removeAll(sign);
-        textForEncoding = String.join("", symbolList);
-        return textForEncoding;
-    }
-
-    public static void messageEncoding(String text) {
+    public static void messageEncoding(String pathToFile, String fileName) {
+        String text = thisMyText(pathToFile);
         Alphabet alphabet = getMyAlpha(text);
         calculateProbability(alphabet, text);
         HuffmanTree tree = buildATree(alphabet);
         mainAlphabet = buildCodeTable(tree);
-        System.out.println(encoding(mainAlphabet, text));
+        createLink(pathToFile);
+        File compressedFile = new File(pathToNewFile + fileName + ".txt");
+        try (FileWriter writer = new FileWriter(compressedFile, false)){
+            encoding(mainAlphabet, text, writer);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public static String thisMyText(String fileName) {
         return Reader.readTxtFile(fileName).toLowerCase(Locale.ROOT);
     }
-
 
     public static Alphabet getMyAlpha(String text) {
         Alphabet myAlpha = new Alphabet(new ArrayList<>());
@@ -48,12 +53,19 @@ public class Algorithm {
         return myAlpha;
     }
 
+    public static String getCorrectText(String text) {
+        ArrayList<String> symbolList = new ArrayList<>(Arrays.asList(text.split("")));
+        ArrayList<String> sign = new ArrayList<>(Arrays.asList(",", ".", "-", "(", ")", "—", "\"", "'"));
+        symbolList.removeAll(sign);
+        textForEncoding = String.join("", symbolList);
+        return textForEncoding;
+    }
+
     public static void calculateProbability(Alphabet alpha, String text) {
         for (Element el : alpha.symbols) {
             el.frequency = el.count * 1.0 / text.length();
         }
     }
-
 
     public static HuffmanTree buildATree(Alphabet myAlpha) {
         Queue<HuffmanTree> trees = new PriorityQueue<>();
@@ -92,7 +104,6 @@ public class Algorithm {
         return table;
     }
 
-
     public static String[] searchLeafNode(Node node, String code) {
         if (node.leftChild != null) {
             code = code + "0";
@@ -130,15 +141,28 @@ public class Algorithm {
     }
 
 
-    public static String encoding(Map<String, String> binaryForm, String text) {
+
+    public static void createLink(String path){
+        ArrayList<String> list  = new ArrayList<>(Arrays.asList(path.split(" ")));
+        list.remove(list.get(list.size() - 1 ));
+        pathToNewFile = String.join("\\", list);
+    }
+
+
+    public static void encoding(Map<String, String> binaryForm, String text, FileWriter writer) {
         text = getCorrectText(text);
         ArrayList<String> encoder = new ArrayList<>(Arrays.asList(text.split(" ")));
         String encodingMessage = encoder.stream().map(o1 -> binaryForm.get(o1) + " ").collect(Collectors.joining());
-        textForDecoding = encodingMessage;
-        return encodingMessage;
+        try {
+            writer.write(encodingMessage);
+            writer.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
-    public static void messageDecoding(Map<String, String> normalForm, String text) {
+    public static void messageDecoding(Map<String, String> normalForm, String path) {
+        String text = thisMyText(path);
         ArrayList<String> decoder = new ArrayList<>(Arrays.asList(text.split(" ")));
         for (int i = 0; i < decoder.size(); i++) {
             for (Map.Entry<String, String> entry : normalForm.entrySet()) {
